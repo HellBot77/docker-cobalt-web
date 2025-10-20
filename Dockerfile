@@ -6,16 +6,16 @@ RUN git clone https://github.com/imputnet/cobalt.git && \
     ([[ "$TAG" = "latest" ]] || git checkout ${TAG})
     # rm -rf .git
 
-FROM node:alpine AS build
+FROM --platform=$BUILDPLATFORM node:alpine AS build
 
 WORKDIR /cobalt
 COPY --from=base /git/cobalt .
-RUN npm install -g pnpm && \
-    pnpm install && \
+RUN npm install --global pnpm && \
+    pnpm install --frozen-lockfile && \
     cd web && \
-    export NODE_ENV=production && \
+    export WEB_DEFAULT_API=https://api.cobalt.tools && \
     pnpm build
 
-FROM lipanski/docker-static-website
+FROM joseluisq/static-web-server
 
-COPY --from=build /cobalt/web/build .
+COPY --from=build /cobalt/web/build ./public
